@@ -98,3 +98,8 @@ curl -i 'http://localhost:7557/presets/inform' -X DELETE
 ```bash
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X DELETE
 ```
+
+More about provisions and extensions:
+https://github.com/genieacs/genieacs/wiki/Provisions
+https://github.com/genieacs/genieacs/wiki/Extensions
+https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
