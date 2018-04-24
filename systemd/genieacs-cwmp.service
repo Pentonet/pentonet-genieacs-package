@@ -1,0 +1,16 @@
+[Unit]
+Description=GenieACS CWMP server
+After=mongod.service
+Requires=mongod.service
+
+[Service]
+Type=simple
+ExecStart=/home/nariman/genieacs/bin/genieacs-cwmp
+StandardOutput=syslog
+Restart=always
+RestartSec=5
+User=nariman
+Group=nariman
+
+[Install]
+WantedBy=multi-user.target
