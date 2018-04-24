@@ -55,6 +55,7 @@ curl -i 'http://localhost:7557/provisions/common' \
   --data '@/path/to/js/provision.js'
 ```
 
+- *fap-config-example.js* - Example of the FAP config file which is understood by the *provision.js* provisioning script (which works in pair with *ext-sample.js*)
 
 ## Provisioning a FAP
 
