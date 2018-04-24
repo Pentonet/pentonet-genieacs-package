@@ -4,14 +4,14 @@ GenieACS documentation can be found under the following [link](https://github.co
 
 ## GenieACS sample installation
 
-### GenieACS requirements:
+#### GenieACS requirements:
 
 - nodejs 8.* https://nodejs.org/uk/download/package-manager/#debian-and-ubuntu-based-linux-distributions
 - mongodb 3.4.* https://docs.mongodb.com/v3.4/tutorial/install-mongodb-on-ubuntu/
 - redis-server `apt-get install redis-server`
 - build-essential `apt-get install build-essential`
 
-### Installation steps
+#### Installation steps
 
 The current working directory is assumed to be `/home/nariman`
 
@@ -61,6 +61,8 @@ curl -i 'http://localhost:7557/provisions/common' \
 
 Assuming genieacs-nbi is on localhost and listening to the port 7557.
 
+#### Example
+
 If the FAP is configured to connect to the ACS, then you will see a message like this in the logs of the genieacs-cwmp:
 ```
 Apr 24 16:15:58 ACS genieacs-cwmp[13045]: 2018-04-24T13:15:58.237Z [INFO] 200.200.200.5 000295-0000281819: Inform; cpeRequestId="10718" informEvent="4 VALUE CHANGE" informRetryCount=5
@@ -85,7 +87,7 @@ In order to tag a FAP you can do the following:
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X POST
 ```
 
-How it works now:
+#### How it works now:
 
 1. FAP sends cwmp:inform message to the ACS.
 2. ACS sees that the device is tagged with the tag "testing" and there is a preset that instructs to run a provisioning script.
@@ -93,7 +95,7 @@ How it works now:
 4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in *provision.js*).
 5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action  (function `ensureCorrectParamValues()` in *provision.js*)
 
-If you want to **delete** a provision, a preset or untag the FAP:
+#### If you want to **delete** a provision, a preset or untag the FAP:
 
 - Deleting a provision with the name "common":
 ```bash
@@ -108,7 +110,7 @@ curl -i 'http://localhost:7557/presets/inform' -X DELETE
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X DELETE
 ```
 
-More about provisions and extensions:
+#### More about provisions and extensions (scripting the provisioning flow):
 https://github.com/genieacs/genieacs/wiki/Provisions
 https://github.com/genieacs/genieacs/wiki/Extensions
 https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
