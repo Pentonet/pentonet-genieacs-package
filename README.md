@@ -86,15 +86,15 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X POST
 
 If you want to **delete** a provision, a preset or untag the FAP:
 
-- Deleting a provision:
+- Deleting a provision with the name "common":
 ```bash
 curl -i 'http://localhost:7557/provisions/common' -X DELETE
 ```
-- Deleting a preset:
+- Deleting a preset with the name "inform":
 ```bash
 curl -i 'http://localhost:7557/presets/inform' -X DELETE
 ```
-- Untag a FAP:
+- Untag a FAP (Delete the tag "testing" from the FAP with the ID of "000295-0000281819"):
 ```bash
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X DELETE
 ```
