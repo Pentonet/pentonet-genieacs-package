@@ -55,7 +55,7 @@ curl -i 'http://localhost:7557/provisions/common' \
   --data '@/path/to/js/provision.js'
 ```
 
-- *fap-config-example.js* - Example of the FAP config file which is understood by the *provision.js* provisioning script (which works in pair with *ext-sample.js*)
+- *fap-config-example.js* - Example of the FAP config file which is understood by the *provision.js* provisioning script (which works in pair with *ext-sample.js*).
 
 ## Provisioning a FAP
 
@@ -93,7 +93,7 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X POST
 2. ACS sees that the device is tagged with the tag "testing" and there is a preset that instructs to run a provisioning script.
 3. The provisioning script invokes *ext-sample.js* to get the parameters values from the configuration file.
 4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in *provision.js*).
-5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action  (function `ensureCorrectParamValues()` in *provision.js*)
+5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action (function `ensureCorrectParamValues()` in *provision.js*).
 
 #### If you want to **delete** a provision, a preset or untag the FAP:
 
@@ -114,3 +114,9 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X DELETE
 https://github.com/genieacs/genieacs/wiki/Provisions
 https://github.com/genieacs/genieacs/wiki/Extensions
 https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
+
+## Important notes
+
+- `xsd:signedInt` type used in some ip.access CPEs is not standard and the type `xsd:int` should be used in configuration files (*fap-config-example.js* for example).
+
+- `"XML_RECOVER": true` option was used in the `config.json` to enable parsing XML in the recovery mode. It means that even if there were some errors (`... Input is not proper UTF-8 ...`, etc.) the document would still be parsed to the end.
