@@ -9,5 +9,5 @@
   "FS_PORT" : 7567,
   "FS_HOSTNAME" : "acs.example.com",
   "DEBUG" : false,
-  "LIBXMLJS_OPTIONS" : {"recover" : true}
+  "XML_RECOVER": true
 }
