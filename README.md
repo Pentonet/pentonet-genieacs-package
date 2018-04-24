@@ -85,6 +85,14 @@ In order to tag a FAP you can do the following:
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X POST
 ```
 
+How it works now:
+
+1. FAP sends cwmp:inform message to the ACS.
+2. ACS sees that the device is tagged with the tag "testing" and there is a preset that instructs to run a provisioning script.
+3. The provisioning script invokes *ext-sample.js* to get the parameters values from the configuration file.
+4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in *provision.js*).
+5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action  (function `ensureCorrectParamValues()` in *provision.js*)
+
 If you want to **delete** a provision, a preset or untag the FAP:
 
 - Deleting a provision with the name "common":
