@@ -188,7 +188,7 @@ Upload /home/acs/provision.js to the ACS
 
 curl -i 'http://localhost:7557/provisions/myprovision' \
     -X PUT \
-    --data '@/home/acs/provision.js
+    --data '@/home/acs/provision.js'
 ```
 
 ###### Create a preset
