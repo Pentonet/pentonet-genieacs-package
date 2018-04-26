@@ -1,4 +1,4 @@
-# nano3g ip.access FAP configuration
+# nano3g ip.access FAP configuration with ACS
 
 [GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
 
@@ -116,95 +116,440 @@ sudo systemctl start genieacs-nbi.service
 
 It is assumed that the GenieACS was installed in the way shown above.
 
-***To be continued***
+#### Configuring GenieACS to use a specific configuration file
 
+Our configuration will be straightforward:
+1. Read the config file from the filesystem.
+2. Parse it.
+3. Update the parameters on the FAP if they differ from ones of configuration file.
 
----
+For that we need to do the following:
+1. Create a script that will do the configuration.
+2. Create a preset that will instruct the ACS to run a provision for FAP that matches a specific precondition (In our case, if device is tagged).
+3. Create a configuration file for the script to read.
+4. Configure the FAP to point to the ACS server. Instructions on how to do it are in the documentation of the FAP.
+5. Tag our FAP, so that the configuration will take place.
 
-# OLD PART GOES BELOW
+It is important to do the tagging as the last step, so that all the configuration scripts/files will be ready by the time. The order of the other steps is not important.
 
-## Files from this repository
+###### Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
 
-- *Files from the systemd/ folder* - You can use them or write yours. Put them in the /lib/systemd/system folder.
+Create the external script /home/acs/genieacs/config/ext/ext-config.js which will be used by /home/acs/provision.js
+```javascript
+"use strict";
 
-- *config.json* - To be put in the config/ directory of the GenieACS.
+const fs = require("fs");
 
-- *ext-sample.js* - To be put in the config/ext/ directory of the GenieACS.
+const PATH_TO_CONFIGURATION_FILE = '/home/acs/fap-config.json';
 
-- *provision.js* - To be uploaded to the GenieACS database via the API. It calls `getCommonConfigurationFileContents()` function of *ext-sample.js* script to get the configuration file contents which are encoded as JSON.
+function readConfigurationFile(args, callback) {
+fs.readFile(PATH_TO_CONFIGURATION_FILE, 'utf8', callback);
+}
 
+exports.readConfigurationFile = readConfigurationFile;
+```
+
+Create a file /home/acs/provision.js
+```javascript
+"use strict";
+
+const now = Date.now();
+
+// Call to the function "readConfigurationFile" of the external script /home/acs/genieacs/config/ext/ext-config.js
+const configurationFileContents = ext("ext-config", "readConfigurationFile");
+
+const params = JSON.parse();
+
+refreshParams();
+ensureCorrectParamValues();
+
+// Reads param values from the FAP and stores them in database of GenieACS
+function refreshParams() {
+    params.forEach(function(param) {
+        const name = param[0];
+        declare(name, {value: now});
+    });
+}
+
+// Updates param values on the FAP if necessary
+function ensureCorrectParamValues() {
+    params.forEach(function(param) {
+        const [name, value, type] = param;
+        declare(name, {value: now}, {value: [value, type]});
+    });
+}
+```
+
+Upload /home/acs/provision.js to the ACS
 ```bash
 # Example - uploading a provision to the GenieACS via its API - genieacs-nbi.
 # Assuming genieacs-nbi is on localhost and listening to the port 7557.
-# The provision with the name "common" will be created.
+# The provision with the name "myprovision" will be created.
 
-curl -i 'http://localhost:7557/provisions/common' \
-  -X PUT \
-  --data '@/path/to/js/provision.js'
+curl -i 'http://localhost:7557/provisions/myprovision' \
+    -X PUT \
+    --data '@/home/acs/provision.js
 ```
 
-- *fap-config-example.js* - Example of the FAP config file which is understood by the *provision.js* provisioning script (which works in pair with *ext-sample.js*).
+###### Create a preset
 
-## Provisioning a FAP
+```bash
+# Example - creating a preset.
+# The preset with the name "mypreset" will be created.
+# It instructs to run the provision with the name "myprovision" against the FAP that was tagged with the tag "mytag".
 
-Assuming genieacs-nbi is on localhost and listening to the port 7557.
+curl -i 'http://localhost:7557/presets/mypreset' \
+    -X PUT \
+    --data '{ "weight": 0, "precondition": "{\"_tags\":\"mytag\"}", "configurations": [ { "type": "provision", "name": "myprovision" } ] }'
+```
 
-#### Example
+###### Create a configuration file with FAP parameters
 
-If the FAP is configured to connect to the ACS, then you will see a message like this in the logs of the genieacs-cwmp:
+Create a file /home/acs/fap-config.json. Full example of its content is at the end of this page.
+
+###### Tag the FAP
+
+If you have configured the FAP to point to the ACS server, then you will be able to see messages like this in the logs of the GenieACS:
 ```
 Apr 24 16:15:58 ACS genieacs-cwmp[13045]: 2018-04-24T13:15:58.237Z [INFO] 200.200.200.5 000295-0000281819: Inform; cpeRequestId="10718" informEvent="4 VALUE CHANGE" informRetryCount=5
 ```
-Where `000295-0000281819` is the ID of the FAP. In this case its in the form of <OUI>-<SerialNumber>.
+Where `000295-0000281819` is the device id. In this case it is in the form of <OUI>-<SerialNumber>, but the form may differ for you.
 
-In order to provision the FAP you need to create a **preset**
-```bash
-# Example - creating a preset.
-# The preset with the name "inform" will be created.
-# It instructs to run the provision with the name "common" against the FAP that was tagged with the tag "testing".
-
-curl -i 'http://localhost:7557/presets/inform' \
-  -X PUT \
-  --data '{ "weight": 0, "precondition": "{\"_tags\":\"testing\"}", "configurations": [ { "type": "provision", "name": "common" } ] }'
-```
-
-In order to tag a FAP you can do the following:
 ```bash
 # Example - tagging the FAP
-# This will tag the FAP with the ID of "000295-0000281819" with the tag "testing"
-curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X POST
+# This will tag the FAP with the ID of "000295-0000281819" with the tag "mytag"
+curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 ```
 
 #### How it works now:
 
 1. FAP sends cwmp:inform message to the ACS.
-2. ACS sees that the device is tagged with the tag "testing" and there is a preset that instructs to run a provisioning script.
-3. The provisioning script invokes *ext-sample.js* to get the parameters values from the configuration file.
-4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in *provision.js*).
-5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action (function `ensureCorrectParamValues()` in *provision.js*).
+2. ACS sees that the device is tagged with the tag "mytag" and there is a preset that instructs to run a provisioning script with the name "myprovision".
+3. The provisioning script invokes ext-config.js to get the parameters values from the configuration file /home/acs/fap-config.json.
+4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in provision "myprovision").
+5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action (function `ensureCorrectParamValues()` in provision "myprovision").
 
 #### If you want to **delete** a provision, a preset or untag the FAP:
 
 - Deleting a provision with the name "common":
 ```bash
-curl -i 'http://localhost:7557/provisions/common' -X DELETE
+curl -i 'http://localhost:7557/provisions/myprovision' -X DELETE
 ```
 - Deleting a preset with the name "inform":
 ```bash
-curl -i 'http://localhost:7557/presets/inform' -X DELETE
+curl -i 'http://localhost:7557/presets/mypreset' -X DELETE
 ```
 - Untag a FAP (Delete the tag "testing" from the FAP with the ID of "000295-0000281819"):
 ```bash
-curl -i 'http://localhost:7557/devices/000295-0000281819/tags/testing' -X DELETE
+curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X DELETE
 ```
 
 #### More about provisions and extensions (scripting the provisioning flow):
-https://github.com/genieacs/genieacs/wiki/Provisions
-https://github.com/genieacs/genieacs/wiki/Extensions
-https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
+- https://github.com/genieacs/genieacs/wiki/Provisions
+- https://github.com/genieacs/genieacs/wiki/Extensions
+- https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
 
-## Important notes
 
-- `xsd:signedInt` type used in some ip.access CPEs is not standard and the type `xsd:int` should be used in configuration files (*fap-config-example.js* for example).
+---
 
-- `"XML_RECOVER": true` option was used in the `config.json` to enable parsing XML in the recovery mode. It means that even if there were some errors (`... Input is not proper UTF-8 ...`, etc.) the document would still be parsed to the end.
+## Full configuration file example (/home/acs/fap-config.json)
+
+```json
+[
+  [
+    "Device.IPsec.Enable",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.ManagementServer.PeriodicInformEnable",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.ManagementServer.PeriodicInformInterval",
+    60,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.ManagementServer.URL",
+    "http://192.168.16.103:7547",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.AccessMode",
+    "Open Access",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName",
+    "000295-0000281819@ipaccess.com",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.NonCSGUEAccessDecision",
+    "Local",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.X_000295_AccessDecisionMode",
+    "Legacy Mode",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.X_000295_DefaultUERejectCause",
+    "Roaming not allowed in this location area",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.X_000295_DefaultUERejectMethod",
+    "AUTO",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.AccessMgmt.UMTS.X_000295_ZonalAP",
+    "Zonal AP",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.CSDomain.IMSIAttachDetachEnable",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC",
+    "10422:99",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID",
+    "90198",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.PSDomain.NetworkModeOperationCombined",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.SAC",
+    10,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.CN.X_000295_IuUpInitNoDataSupported",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellID",
+    10,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellRestriction.CellBarred",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellRestriction.CellReservedForOperatorUse",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellRestriction.IntraFreqCellReselectionIndicator",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.MaxFAPTxPowerExpanded",
+    "50",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.MaxULTxPower",
+    "24",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.PCPICHPower",
+    "10.0",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.PrimaryScramblingCode",
+    "401",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.UARFCNDL",
+    "9800",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_CellBroadcastDefaultMessage",
+    "",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_CellBroadcastEnable",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_CellBroadcastMode",
+    "CB_MODE_DEFAULT_MESSAGE",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_HandoverEnabled",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_IntraFrequencyHandoutEnabled",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_PSHandoverEnabled",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.X_000295_PSInactivityTimeout",
+    30,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.FAPControl.UMTS.AdminState",
+    true,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.FAPControl.UMTS.Gateway.FAPGWServer1",
+    "192.168.16.100",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.UMTS.WCDMA.ScanOnBoot",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.UMTS.WCDMA.ScanPeriodically",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.UMTS.WCDMA.ScanTimeout",
+    0,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.X_000295_CellParameterSelectionMethod",
+    "CONFIGURED",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.X_000295_ExternalPaGain",
+    0,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.X_000295_NeighbourListPopulation",
+    2,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.X_000295_RFParamsCandidateList",
+    "9800-401",
+    "xsd:string"
+  ],
+  [
+    "Device.Services.FAPService.1.REM.X_000295_ScanBands",
+    "",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.LocalTimeZone",
+    "GMT",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.NTPServer1",
+    "192.168.14.11",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.NTPServer2",
+    "1.ipaccess.pool.ntp.org",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.NTPServer3",
+    "2.ipaccess.pool.ntp.org",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.NTPServer4",
+    "3.ipaccess.pool.ntp.org",
+    "xsd:string"
+  ],
+  [
+    "Device.Time.X_000295_NTPFrequencyDisciplineEnabled",
+    false,
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.HCSPrio",
+    0,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.QHCS",
+    0,
+    "xsd:unsignedInt"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SHCSRAT",
+    -105,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SIntersearch",
+    8,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SIntrasearch",
+    10,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SLimitSearchRAT",
+    0,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SSearchHCS",
+    -100,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.SSearchRAT",
+    8,
+    "xsd:int"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.UseOfHCS",
+    "",
+    "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RNCID",
+    23,
+    "xsd:unsignedInt"
+  ]
+]
+```
