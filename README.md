@@ -1,39 +1,127 @@
-# GenieACS configuration
+# nano3g ip.access FAP configuration
 
-GenieACS documentation can be found under the following [link](https://github.com/genieacs/genieacs/wiki). But as it is not complete this document has been created.
+[GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
 
-## GenieACS sample installation
+GenieACS documentation can be found under the following [link](https://github.com/genieacs/genieacs/wiki). (The documentation of the GenieACS is not complete, so you may want to browse its issues, pull requests and source code)
+
+The process of the FAP configuration is scriptable (JavaScript). So, rather complex logic can be implemented.
+
+## GenieACS sample installation process
+
+The operating system is assumed to be Ubuntu 16.04 LTS.
+The user `acs` is assumed to exist and have its home directory `/home/acs`.
 
 #### GenieACS requirements:
 
-- nodejs 8.* https://nodejs.org/uk/download/package-manager/#debian-and-ubuntu-based-linux-distributions
-- mongodb 3.4.* https://docs.mongodb.com/v3.4/tutorial/install-mongodb-on-ubuntu/
-- redis-server `apt-get install redis-server`
-- build-essential `apt-get install build-essential`
+- [nodejs 8.*](https://nodejs.org/uk/download/package-manager/#debian-and-ubuntu-based-linux-distributions)
+- [mongodb 3.4.*](https://docs.mongodb.com/v3.4/tutorial/install-mongodb-on-ubuntu/)
+- redis-server `sudo apt-get install redis-server`
+- build-essential `sudo apt-get install build-essential`
 
 #### Installation steps
 
-The current working directory is assumed to be `/home/nariman`
+- Download the archive in the format *tar.gz* (other GenieACS versions: [link](https://github.com/genieacs/genieacs/releases))
 
-- Download the archive in the format *tar.gz* `wget https://github.com/genieacs/genieacs/archive/v1.1.2.tar.gz` (other GenieACS versions: https://github.com/genieacs/genieacs/releases)
+```bash
+cd /home/acs
+wget https://github.com/genieacs/genieacs/archive/v1.1.2.tar.gz
+```
 
 - Extract the archive and rename it
 
 ```bash
-    tar -xvzf v1.1.2.tar.gz
-    mv v1.1.2.tar.gz genieacs
+cd /home/acs
+tar -xvzf v1.1.2.tar.gz
+mv v1.1.2.tar.gz genieacs
 ```
 
 - Install dependencies via npm
 
 ```bash
-    cd genieacs
-    npm i
-    npm run configure
-    npm run compile
+cd /home/acs/genieacs
+npm i
+npm run configure
+npm run compile
 ```
 
-- Copy the *config.json* file from this repository to */home/nariman/genieacs/config/config.json*. And modify it according to your needs
+- Modify configuration file */home/acs/genieacs/config/config.json* according to your needs. Example is shown below. Note that `"XML_RECOVER": true` tells the XML parser to parse XML in the recovery mode. It means that it will continue parsing the XML content to the end even if there were errors encountered. (Sometimes some ip.access FAPs send not properly encoded symbols which XML parser fails to understand).
+
+```
+{
+    "MONGODB_CONNECTION_URL" : "mongodb://127.0.0.1:27017/genieacs",
+    "CWMP_INTERFACE" : "0.0.0.0",
+    "CWMP_PORT" : 7547,
+    "CWMP_SSL" : false,
+    "NBI_INTERFACE" : "0.0.0.0",
+    "NBI_PORT" : 7557,
+    "FS_INTERFACE" : "0.0.0.0",
+    "FS_PORT" : 7567,
+    "FS_HOSTNAME" : "acs.example.com",
+    "DEBUG" : false,
+    "XML_RECOVER": true
+}
+```
+
+- **(optional)** Create systemd units for genieacs-cwmp (ACS) and for genieacs-nbi (API for managing the ACS).
+
+/lib/systemd/system/genieacs-cwmp.service:
+```
+[Unit]
+Description=GenieACS CWMP server
+After=mongod.service
+Requires=mongod.service
+
+[Service]
+Type=simple
+ExecStart=/home/acs/genieacs/bin/genieacs-cwmp
+StandardOutput=syslog
+Restart=always
+RestartSec=5
+User=acs
+Group=acs
+
+[Install]
+WantedBy=multi-user.target
+```
+
+/lib/systemd/system/genieacs-nbi.service:
+```
+[Unit]
+Description=GenieACS API
+PartOf=genieacs-cwmp.service
+After=genieacs-cwmp.service
+
+[Service]
+Type=simple
+ExecStart=/home/acs/genieacs/bin/genieacs-nbi
+StandardOutput=syslog
+Restart=always
+RestartSec=5
+User=acs
+Group=acs
+
+[Install]
+WantedBy=genieacs-cwmp.service
+```
+
+Then start the servers (redis-server might be already started just after its installation):
+```bash
+#sudo systemctl start redis-server.service
+sudo systemctl start mongod.service
+sudo systemctl start genieacs-cwmp.service
+sudo systemctl start genieacs-nbi.service
+```
+
+## The FAP configuration process
+
+It is assumed that the GenieACS was installed in the way shown above.
+
+***To be continued***
+
+
+---
+
+# OLD PART GOES BELOW
 
 ## Files from this repository
 
