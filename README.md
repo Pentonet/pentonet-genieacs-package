@@ -119,20 +119,28 @@ It is assumed that the GenieACS was installed in the way shown above.
 #### Configuring GenieACS to use a specific configuration file
 
 Our configuration will be straightforward:
+
 1. Read the config file from the filesystem.
+
 2. Parse it.
+
 3. Update the parameters on the FAP if they differ from ones of configuration file.
 
 For that we need to do the following:
+
 1. Create a script that will do the configuration.
+
 2. Create a preset that will instruct the ACS to run a provision for FAP that matches a specific precondition (In our case, if device is tagged).
+
 3. Create a configuration file for the script to read.
+
 4. Configure the FAP to point to the ACS server. Instructions on how to do it are in the documentation of the FAP.
+
 5. Tag our FAP, so that the configuration will take place.
 
 It is important to do the tagging as the last step, so that all the configuration scripts/files will be ready by the time. The order of the other steps is not important.
 
-###### Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
+##### Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
 
 Create the external script /home/acs/genieacs/config/ext/ext-config.js which will be used by /home/acs/provision.js
 ```javascript
@@ -191,7 +199,7 @@ curl -i 'http://localhost:7557/provisions/myprovision' \
     --data '@/home/acs/provision.js'
 ```
 
-###### Create a preset
+##### Create a preset
 
 ```bash
 # Example - creating a preset.
@@ -203,11 +211,11 @@ curl -i 'http://localhost:7557/presets/mypreset' \
     --data '{ "weight": 0, "precondition": "{\"_tags\":\"mytag\"}", "configurations": [ { "type": "provision", "name": "myprovision" } ] }'
 ```
 
-###### Create a configuration file with FAP parameters
+##### Create a configuration file with FAP parameters
 
 Create a file /home/acs/fap-config.json. Full example of its content is at the end of this page.
 
-###### Tag the FAP
+##### Tag the FAP
 
 If you have configured the FAP to point to the ACS server, then you will be able to see messages like this in the logs of the GenieACS:
 ```
@@ -224,9 +232,14 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 #### How it works now:
 
 1. FAP sends cwmp:inform message to the ACS.
+
+
 2. ACS sees that the device is tagged with the tag "mytag" and there is a preset that instructs to run a provisioning script with the name "myprovision".
+
 3. The provisioning script invokes ext-config.js to get the parameters values from the configuration file /home/acs/fap-config.json.
+
 4. After the provisioning script successfully parses configuration file contents ACS issues a GetParameterValues action to the FAP and refreshes the "cached" values in the database of the GenieACS. (function `refreshParams()` in provision "myprovision").
+
 5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action (function `ensureCorrectParamValues()` in provision "myprovision").
 
 #### If you want to **delete** a provision, a preset or untag the FAP:
