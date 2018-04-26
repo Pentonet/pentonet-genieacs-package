@@ -6,19 +6,19 @@ GenieACS documentation can be found under the following [link](https://github.co
 
 The process of the FAP configuration is scriptable (JavaScript). So, rather complex logic can be implemented.
 
-## GenieACS sample installation process
+## 1 GenieACS sample installation process
 
 The operating system is assumed to be Ubuntu 16.04 LTS.
 The user `acs` is assumed to exist and have its home directory `/home/acs`.
 
-#### GenieACS requirements:
+#### 1.1 GenieACS requirements:
 
 - [nodejs 8.*](https://nodejs.org/uk/download/package-manager/#debian-and-ubuntu-based-linux-distributions)
 - [mongodb 3.4.*](https://docs.mongodb.com/v3.4/tutorial/install-mongodb-on-ubuntu/)
 - redis-server `sudo apt-get install redis-server`
 - build-essential `sudo apt-get install build-essential`
 
-#### Installation steps
+#### 1.2 Installation steps
 
 - Download the archive in the format *tar.gz* (other GenieACS versions: [link](https://github.com/genieacs/genieacs/releases))
 
@@ -112,11 +112,11 @@ sudo systemctl start genieacs-cwmp.service
 sudo systemctl start genieacs-nbi.service
 ```
 
-## The FAP configuration process
+## 2 The FAP configuration process
 
 It is assumed that the GenieACS was installed in the way shown above.
 
-#### Configuring GenieACS to use a specific configuration file
+#### 2.1 Configuring GenieACS to use a specific configuration file
 
 Our configuration will be straightforward:
 
@@ -140,7 +140,7 @@ For that we need to do the following:
 
 It is important to do the tagging as the last step, so that all the configuration scripts/files will be ready by the time. The order of the other steps is not important.
 
-##### Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
+##### 2.1.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
 
 Create the external script /home/acs/genieacs/config/ext/ext-config.js which will be used by /home/acs/provision.js
 ```javascript
@@ -199,7 +199,7 @@ curl -i 'http://localhost:7557/provisions/myprovision' \
     --data '@/home/acs/provision.js'
 ```
 
-##### Create a preset
+##### 2.1.2 Create a preset
 
 ```bash
 # Example - creating a preset.
@@ -211,11 +211,11 @@ curl -i 'http://localhost:7557/presets/mypreset' \
     --data '{ "weight": 0, "precondition": "{\"_tags\":\"mytag\"}", "configurations": [ { "type": "provision", "name": "myprovision" } ] }'
 ```
 
-##### Create a configuration file with FAP parameters
+##### 2.1.3 Create a configuration file with FAP parameters
 
 Create a file /home/acs/fap-config.json. Full example of its content is at the end of this page.
 
-##### Tag the FAP
+##### 2.1.4 Tag the FAP
 
 If you have configured the FAP to point to the ACS server, then you will be able to see messages like this in the logs of the GenieACS:
 ```
@@ -229,7 +229,7 @@ Where `000295-0000281819` is the device id. In this case it is in the form of <O
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 ```
 
-#### How it works now:
+#### 2.2 How it works now:
 
 1. FAP sends cwmp:inform message to the ACS.
 
@@ -242,7 +242,7 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 
 5. After that it checks if the values from the FAP coincide with the values it has read from the configuration file. For the params that differ ACS issues a SetParameterValues action (function `ensureCorrectParamValues()` in provision "myprovision").
 
-#### If you want to **delete** a provision, a preset or untag the FAP:
+#### 2.3 If you want to **delete** a provision, a preset or untag the FAP:
 
 - Deleting a provision with the name "common":
 ```bash
@@ -257,7 +257,7 @@ curl -i 'http://localhost:7557/presets/mypreset' -X DELETE
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X DELETE
 ```
 
-#### More about provisions and extensions (scripting the provisioning flow):
+#### 2.4 More about provisions and extensions (scripting the provisioning flow):
 - https://github.com/genieacs/genieacs/wiki/Provisions
 - https://github.com/genieacs/genieacs/wiki/Extensions
 - https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
@@ -265,7 +265,7 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X DELETE
 
 ---
 
-## Full configuration file example (/home/acs/fap-config.json)
+## 3 Full configuration file example (/home/acs/fap-config.json)
 
 ```json
 [
