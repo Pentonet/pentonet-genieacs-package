@@ -1,3 +1,5 @@
+[TOC]
+
 # nano3g ip.access FAP configuration with ACS
 
 [GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
@@ -118,7 +120,41 @@ sudo systemctl start genieacs-nbi.service
 
 It is assumed that the GenieACS was installed in the way shown above.
 
-#### 2.1 Configuring GenieACS to use a specific configuration file
+There are two ways of doing the configuration presented here:
+
+- Just tell the ACS to set the parameters on the FAP once (see 2.1).
+
+- Create a scripted workflow for FAP provisioning (in this example - reading params from a configuration file) (see 2.2).
+
+#### 2.1 Just tell the ACS to set the parameters on the FAP once
+
+In this example we will set `Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID` to `90198` and `Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC` to `10422:99`:
+
+##### 2.1.1 Know the ID of your FAP
+
+If you have configured the FAP to point to the ACS server, then you will be able to see messages like this in the logs of the GenieACS:
+```
+Apr 24 16:15:58 ACS genieacs-cwmp[13045]: 2018-04-24T13:15:58.237Z [INFO] 200.200.200.5 000295-0000281819: Inform; cpeRequestId="10718" informEvent="4 VALUE CHANGE" informRetryCount=5
+```
+Where `000295-0000281819` is the device id. In this case it is in the form of `OUI-SerialNumber`, but the form may differ for you.
+
+##### 2.1.2 Let the ACS get the parameter names, types and values from the FAP
+
+```bash
+curl -i 'http://localhost:7557/devices/000295-0000281819/tasks?connection_request' \
+-X POST \
+--data '{ "name": "getParameterValues", "parameterValues": ["Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID", "Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC"] }'
+```
+
+##### 2.1.3 Update the parameter values on the FAP
+
+```bash
+curl -i 'http://localhost:7557/devices/000295-0000281819/tasks?connection_request' \
+    -X POST \
+    --data '{ "name": "setParameterValues", "parameterValues": [["Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID", "90198"], ["Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC", "10422:99"]] }'
+```
+
+#### 2.2 Configuring GenieACS to use a specific configuration file
 
 Our configuration will be straightforward:
 
@@ -142,7 +178,7 @@ For that we need to do the following:
 
 It is important to do the tagging as the last step, so that all the configuration scripts/files will be ready by the time. The order of the other steps is not important.
 
-##### 2.1.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
+##### 2.2.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
 
 Create the external script /home/acs/genieacs/config/ext/ext-config.js which will be used by /home/acs/provision.js
 ```javascript
@@ -201,7 +237,7 @@ curl -i 'http://localhost:7557/provisions/myprovision' \
     --data '@/home/acs/provision.js'
 ```
 
-##### 2.1.2 Create a preset
+##### 2.2.2 Create a preset
 
 ```bash
 # Example - creating a preset.
@@ -213,11 +249,11 @@ curl -i 'http://localhost:7557/presets/mypreset' \
     --data '{ "weight": 0, "precondition": "{\"_tags\":\"mytag\"}", "configurations": [ { "type": "provision", "name": "myprovision" } ] }'
 ```
 
-##### 2.1.3 Create a configuration file with FAP parameters
+##### 2.2.3 Create a configuration file with FAP parameters
 
 Create a file /home/acs/fap-config.json. Full example of its content is at the end of this page.
 
-##### 2.1.4 Tag the FAP
+##### 2.2.4 Tag the FAP
 
 If you have configured the FAP to point to the ACS server, then you will be able to see messages like this in the logs of the GenieACS:
 ```
@@ -231,7 +267,7 @@ Where `000295-0000281819` is the device id. In this case it is in the form of <O
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 ```
 
-#### 2.2 How it works now:
+##### 2.2.5 How it works now:
 
 1. FAP sends cwmp:inform message to the ACS.
 
