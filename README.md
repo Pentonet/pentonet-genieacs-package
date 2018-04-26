@@ -6,6 +6,8 @@ GenieACS documentation can be found under the following [link](https://github.co
 
 The process of the FAP configuration is scriptable (JavaScript). So, rather complex logic can be implemented.
 
+**Note that you should have the documentation for your FAP and you should know which parameters to set and which values these parameters should have.**
+
 ## 1 GenieACS sample installation process
 
 The operating system is assumed to be Ubuntu 16.04 LTS.
