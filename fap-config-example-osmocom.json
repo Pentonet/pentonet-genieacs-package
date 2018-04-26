@@ -11,7 +11,7 @@
   ],
   [
     "Device.ManagementServer.PeriodicInformInterval",
-    55,
+    60,
     "xsd:unsignedInt"
   ],
   [
@@ -61,12 +61,12 @@
   ],
   [
     "Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC",
-    "10:1",
+    "10422:99",
     "xsd:string"
   ],
   [
     "Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID",
-    "25001",
+    "90198",
     "xsd:string"
   ],
   [
@@ -121,12 +121,12 @@
   ],
   [
     "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.PrimaryScramblingCode",
-    "123",
+    "401",
     "xsd:string"
   ],
   [
     "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.UARFCNDL",
-    "10753",
+    "9800",
     "xsd:string"
   ],
   [
@@ -171,7 +171,7 @@
   ],
   [
     "Device.Services.FAPService.1.FAPControl.UMTS.Gateway.FAPGWServer1",
-    "192.168.14.11",
+    "192.168.16.100",
     "xsd:string"
   ],
   [
@@ -206,7 +206,7 @@
   ],
   [
     "Device.Services.FAPService.1.REM.X_000295_RFParamsCandidateList",
-    "10753-123",
+    "9800-401",
     "xsd:string"
   ],
   [
@@ -288,5 +288,10 @@
     "Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellSelection.UseOfHCS",
     "",
     "xsd:boolean"
+  ],
+  [
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.RNCID",
+    23,
+    "xsd:unsignedInt"
   ]
 ]
