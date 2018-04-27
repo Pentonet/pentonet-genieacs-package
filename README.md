@@ -1,3 +1,25 @@
+# Table of Contents
+
+   * [nano3g ip.access FAP configuration with ACS](#nano3g-ipaccess-fap-configuration-with-acs)
+      * [1 GenieACS sample installation process](#1-genieacs-sample-installation-process)
+        * [1.1 GenieACS requirements:](#11-genieacs-requirements)
+        * [1.2 Installation steps](#12-installation-steps)
+      * [2 The FAP configuration process](#2-the-fap-configuration-process)
+        * [2.1 Just tell the ACS to set the parameters on the FAP once](#21-just-tell-the-acs-to-set-the-parameters-on-the-fap-once)
+           * [2.1.1 Know the ID of your FAP](#211-know-the-id-of-your-fap)
+           * [2.1.2 Let the ACS get the parameter names, types and values from the FAP](#212-let-the-acs-get-the-parameter-names-types-and-values-from-the-fap)
+           * [2.1.3 Update the parameter values on the FAP](#213-update-the-parameter-values-on-the-fap)
+           * [2.1.4 More information about GenieACS API](#214-more-information-about-genieacs-api)
+        * [2.2 Configuring GenieACS to use a specific configuration file](#22-configuring-genieacs-to-use-a-specific-configuration-file)
+           * [2.2.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)](#221-create-a-provision-script-and-upload-it-to-the-genieacs-via-its-api-genieacs-nbi)
+           * [2.2.2 Create a preset](#222-create-a-preset)
+           * [2.2.3 Create a configuration file with FAP parameters](#223-create-a-configuration-file-with-fap-parameters)
+           * [2.2.4 Tag the FAP](#224-tag-the-fap)
+           * [2.2.5 How it works now:](#225-how-it-works-now)
+        * [2.3 If you want to <strong>delete</strong> a provision, a preset or untag the FAP:](#23-if-you-want-to-delete-a-provision-a-preset-or-untag-the-fap)
+        * [2.4 More about provisions and extensions (scripting the provisioning flow):](#24-more-about-provisions-and-extensions-scripting-the-provisioning-flow)
+      * [3 Full configuration file example (/home/acs/fap-config.json)](#3-full-configuration-file-example-homeacsfap-configjson)
+
 # nano3g ip.access FAP configuration with ACS
 
 [GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
@@ -24,14 +46,14 @@ The user `acs` is assumed to exist and have its home directory `/home/acs`.
 
 - Download the archive in the format *tar.gz* (other GenieACS versions: [link](https://github.com/genieacs/genieacs/releases))
 
-```bash
+```
 cd /home/acs
 wget https://github.com/genieacs/genieacs/archive/v1.1.2.tar.gz
 ```
 
 - Extract the archive and rename it
 
-```bash
+```
 cd /home/acs
 tar -xvzf v1.1.2.tar.gz
 mv v1.1.2.tar.gz genieacs
@@ -39,7 +61,7 @@ mv v1.1.2.tar.gz genieacs
 
 - Install dependencies via npm
 
-```bash
+```
 cd /home/acs/genieacs
 npm i
 npm run configure
@@ -107,7 +129,7 @@ WantedBy=genieacs-cwmp.service
 ```
 
 Then start the servers (redis-server might be already started just after its installation):
-```bash
+```
 #sudo systemctl start redis-server.service
 sudo systemctl start mongod.service
 sudo systemctl start genieacs-cwmp.service
@@ -138,7 +160,7 @@ Where `000295-0000281819` is the device id. In this case it is in the form of `O
 
 ##### 2.1.2 Let the ACS get the parameter names, types and values from the FAP
 
-```bash
+```
 curl -i 'http://localhost:7557/devices/000295-0000281819/tasks?connection_request' \
 -X POST \
 --data '{ "name": "getParameterValues", "parameterValues": ["Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID", "Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC"] }'
@@ -146,11 +168,16 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tasks?connection_reques
 
 ##### 2.1.3 Update the parameter values on the FAP
 
-```bash
+```
 curl -i 'http://localhost:7557/devices/000295-0000281819/tasks?connection_request' \
     -X POST \
     --data '{ "name": "setParameterValues", "parameterValues": [["Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID", "90198"], ["Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC", "10422:99"]] }'
 ```
+
+##### 2.1.4 More information about GenieACS API
+
+- [https://github.com/genieacs/genieacs/wiki/API-Reference](https://github.com/genieacs/genieacs/wiki/API-Reference)
+
 
 #### 2.2 Configuring GenieACS to use a specific configuration file
 
@@ -179,7 +206,7 @@ It is important to do the tagging as the last step, so that all the configuratio
 ##### 2.2.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)
 
 Create the external script /home/acs/genieacs/config/ext/ext-config.js which will be used by /home/acs/provision.js
-```javascript
+```
 "use strict";
 
 const fs = require("fs");
@@ -194,7 +221,7 @@ exports.readConfigurationFile = readConfigurationFile;
 ```
 
 Create a file /home/acs/provision.js
-```javascript
+```
 "use strict";
 
 const now = Date.now();
@@ -225,7 +252,7 @@ function ensureCorrectParamValues() {
 ```
 
 Upload /home/acs/provision.js to the ACS
-```bash
+```
 # Example - uploading a provision to the GenieACS via its API - genieacs-nbi.
 # Assuming genieacs-nbi is on localhost and listening to the port 7557.
 # The provision with the name "myprovision" will be created.
@@ -237,7 +264,7 @@ curl -i 'http://localhost:7557/provisions/myprovision' \
 
 ##### 2.2.2 Create a preset
 
-```bash
+```
 # Example - creating a preset.
 # The preset with the name "mypreset" will be created.
 # It instructs to run the provision with the name "myprovision" against the FAP that was tagged with the tag "mytag".
@@ -259,7 +286,7 @@ Apr 24 16:15:58 ACS genieacs-cwmp[13045]: 2018-04-24T13:15:58.237Z [INFO] 200.20
 ```
 Where `000295-0000281819` is the device id. In this case it is in the form of <OUI>-<SerialNumber>, but the form may differ for you.
 
-```bash
+```
 # Example - tagging the FAP
 # This will tag the FAP with the ID of "000295-0000281819" with the tag "mytag"
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
@@ -281,29 +308,29 @@ curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X POST
 #### 2.3 If you want to **delete** a provision, a preset or untag the FAP:
 
 - Deleting a provision with the name "common":
-```bash
+```
 curl -i 'http://localhost:7557/provisions/myprovision' -X DELETE
 ```
 - Deleting a preset with the name "inform":
-```bash
+```
 curl -i 'http://localhost:7557/presets/mypreset' -X DELETE
 ```
 - Untag a FAP (Delete the tag "testing" from the FAP with the ID of "000295-0000281819"):
-```bash
+```
 curl -i 'http://localhost:7557/devices/000295-0000281819/tags/mytag' -X DELETE
 ```
 
 #### 2.4 More about provisions and extensions (scripting the provisioning flow):
-- https://github.com/genieacs/genieacs/wiki/Provisions
-- https://github.com/genieacs/genieacs/wiki/Extensions
-- https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow
+- [https://github.com/genieacs/genieacs/wiki/Provisions](https://github.com/genieacs/genieacs/wiki/Provisions)
+- [https://github.com/genieacs/genieacs/wiki/Extensions](https://github.com/genieacs/genieacs/wiki/Extensions)
+- [https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow](https://github.com/genieacs/genieacs/wiki/Example-of-a-Provisioning-Flow)
 
 
 ---
 
 ## 3 Full configuration file example (/home/acs/fap-config.json)
 
-```json
+```
 [
   [
     "Device.IPsec.Enable",
