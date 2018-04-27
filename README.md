@@ -1,25 +1,3 @@
-# Table of Contents
-
-   * [nano3g ip.access FAP configuration with ACS](#nano3g-ipaccess-fap-configuration-with-acs)
-      * [1 GenieACS sample installation process](#1-genieacs-sample-installation-process)
-        * [1.1 GenieACS requirements:](#11-genieacs-requirements)
-        * [1.2 Installation steps](#12-installation-steps)
-      * [2 The FAP configuration process](#2-the-fap-configuration-process)
-        * [2.1 Just tell the ACS to set the parameters on the FAP once](#21-just-tell-the-acs-to-set-the-parameters-on-the-fap-once)
-           * [2.1.1 Know the ID of your FAP](#211-know-the-id-of-your-fap)
-           * [2.1.2 Let the ACS get the parameter names, types and values from the FAP](#212-let-the-acs-get-the-parameter-names-types-and-values-from-the-fap)
-           * [2.1.3 Update the parameter values on the FAP](#213-update-the-parameter-values-on-the-fap)
-           * [2.1.4 More information about GenieACS API](#214-more-information-about-genieacs-api)
-        * [2.2 Configuring GenieACS to use a specific configuration file](#22-configuring-genieacs-to-use-a-specific-configuration-file)
-           * [2.2.1 Create a provision script and upload it to the GenieACS via its api (genieacs-nbi)](#221-create-a-provision-script-and-upload-it-to-the-genieacs-via-its-api-genieacs-nbi)
-           * [2.2.2 Create a preset](#222-create-a-preset)
-           * [2.2.3 Create a configuration file with FAP parameters](#223-create-a-configuration-file-with-fap-parameters)
-           * [2.2.4 Tag the FAP](#224-tag-the-fap)
-           * [2.2.5 How it works now:](#225-how-it-works-now)
-        * [2.3 If you want to <strong>delete</strong> a provision, a preset or untag the FAP:](#23-if-you-want-to-delete-a-provision-a-preset-or-untag-the-fap)
-        * [2.4 More about provisions and extensions (scripting the provisioning flow):](#24-more-about-provisions-and-extensions-scripting-the-provisioning-flow)
-      * [3 Full configuration file example (/home/acs/fap-config.json)](#3-full-configuration-file-example-homeacsfap-configjson)
-
 # nano3g ip.access FAP configuration with ACS
 
 [GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
