@@ -2,7 +2,9 @@
 
 const now = Date.now();
 
-const params = JSON.parse(ext("ext-sample", "getCommonConfigurationFileContents"));
+const hnbid = declare('Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName', {value: 1}).value[0];
+
+const params = ext("ext-config", "getConfiguration", hnbid);
 
 refreshParams();
 ensureCorrectParamValues();

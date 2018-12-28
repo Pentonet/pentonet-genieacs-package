@@ -1,18 +1,44 @@
-"use strict";
+const fs = require('fs')
+    , ini = require('ini')
 
-const fs = require("fs");
+const configFile = '/home/acs/fap-configurations/example.cfg'
+const hnbnameField = 'Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName'
 
-const CONFIG_DIRECTORY = '/home/nariman/fap-configurations';
+function parse(value, type) {
+  if (value === '')
+    return value
 
-function getCommonConfigurationFileContents(args, callback) {
-  fs.readFile(`${CONFIG_DIRECTORY}/common.json`, 'utf8', callback);
+  if (type === 'xsd:int' || type === 'xsd:unsignedInt' || type === 'xsd:signedInt') {
+    return parseInt(value)
+  } else if (type === 'xsd:boolean') {
+    return value === 'true'
+  }
+  return value
 }
 
-function getSpecificConfigurationFileContents(args, callback) {
-  const id = args[0];
-  fs.readFile(`${CONFIG_DIRECTORY}/${id}.json`, 'utf8', callback);
+function getConfiguration(hnbname, callback) {
+  try {
+    const config = ini.parse(fs.readFileSync(configFile, 'utf-8'))
+
+    const commonConfiguration = config['Common']
+
+    const sections = Object.keys(config)
+        .filter(section => section != 'Common' && config[section][hnbnameField] === `${hnbname}|xsd:string`)
+
+    const specificConfiguration = sections.length === 0 ? {} : config[sections[0]]
+
+    const mergedConfiguration = Object.assign(commonConfiguration, specificConfiguration)
+
+    const result = Object.keys(mergedConfiguration).map(propertyName => {
+      const [value, type] = mergedConfiguration[propertyName].split('|')
+
+      return [propertyName, parse(value, type), type]
+    })
+
+    return callback(null, result)
+  } catch (e) {
+    return callback(e, null)
+  }
 }
 
-
-exports.getCommonConfigurationFileContents = getCommonConfigurationFileContents;
-exports.getSpecificConfigurationFileContents = getSpecificConfigurationFileContents;
+exports.getConfiguration = getConfiguration
