@@ -5,12 +5,12 @@ Requires=mongod.service
 
 [Service]
 Type=simple
-ExecStart=/home/nariman/genieacs/bin/genieacs-cwmp
+ExecStart=/home/acs/genieacs/bin/genieacs-cwmp
 StandardOutput=syslog
 Restart=always
 RestartSec=5
-User=nariman
-Group=nariman
+User=acs
+Group=acs
 
 [Install]
 WantedBy=multi-user.target

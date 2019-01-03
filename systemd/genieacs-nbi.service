@@ -5,12 +5,12 @@ After=genieacs-cwmp.service
 
 [Service]
 Type=simple
-ExecStart=/home/nariman/genieacs/bin/genieacs-nbi
+ExecStart=/home/acs/genieacs/bin/genieacs-nbi
 StandardOutput=syslog
 Restart=always
 RestartSec=5
-User=nariman
-Group=nariman
+User=acs
+Group=acs
 
 [Install]
 WantedBy=genieacs-cwmp.service
