@@ -1,0 +1,3 @@
+[submodule "genieacs"]
+	path = genieacs
+	url = https://github.com/efistokl/genieacs.git
