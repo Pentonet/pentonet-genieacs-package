@@ -15,7 +15,7 @@ fpm -s dir -t deb \
     -v "${VERSION}" \
     --iteration "${RELEASE}" \
     --config-files /home/acs/fap-configurations/config.cfg \
-    example.cfg=/home/acs/fap-configurations/config.cfg \
+    config.cfg=/home/acs/fap-configurations/config.cfg \
     genieacs=/home/acs/ \
     config.json=/home/acs/genieacs/config/config.json \
     systemd/genieacs-cwmp.service=/lib/systemd/system/genieacs-cwmp.service \
