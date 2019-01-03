@@ -1,7 +1,7 @@
 const fs = require('fs')
     , ini = require('ini')
 
-const configFile = '/home/acs/fap-configurations/example.cfg'
+const configFile = '/home/acs/fap-configurations/config.cfg'
 const hnbnameField = 'Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName'
 
 function parse(value, type) {
