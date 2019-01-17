@@ -1,3 +1,4 @@
+# README outdated
 # nano3g ip.access FAP configuration with ACS
 
 [GenieACS](https://genieacs.com/) will be used for the configuration of the FAP. (ACS - auto configuration server. [More](https://en.wikipedia.org/wiki/TR-069))
