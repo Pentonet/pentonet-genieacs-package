@@ -2,7 +2,6 @@ const fs = require('fs')
     , ini = require('ini')
 
 const configFile = '/home/acs/fap-configurations/config.cfg'
-const hnbnameField = 'Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName'
 
 function parse(value, type) {
   if (value === '')
@@ -16,16 +15,13 @@ function parse(value, type) {
   return value
 }
 
-function getConfiguration(hnbname, callback) {
+function getConfiguration(serialNumber, callback) {
   try {
     const config = ini.parse(fs.readFileSync(configFile, 'utf-8'))
 
     const commonConfiguration = config['Common']
 
-    const sections = Object.keys(config)
-        .filter(section => section != 'Common' && config[section][hnbnameField] === `${hnbname}|xsd:string`)
-
-    const specificConfiguration = sections.length === 0 ? {} : config[sections[0]]
+    const specificConfiguration = config[serialNumber] || {}
 
     const mergedConfiguration = Object.assign(commonConfiguration, specificConfiguration)
 

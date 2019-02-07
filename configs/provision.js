@@ -2,9 +2,8 @@
 
 const now = Date.now();
 
-const hnbid = declare('Device.Services.FAPService.1.AccessMgmt.UMTS.HNBName', {value: 1}).value[0];
-
-const params = ext("ext-config", "getConfiguration", hnbid);
+const serialNumber = declare('DeviceID.SerialNumber', {value: 1}).value[0];
+const params = ext("ext-config", "getConfiguration", serialNumber);
 
 refreshParams();
 ensureCorrectParamValues();
