@@ -16,7 +16,7 @@ function parse(value, type) {
 }
 
 function makeSingleNeighbourConfiguration(commonConfiguration, neighbourCellConfiguration, neighbourIndex) {
-    const pre = `Device.Services.FAPService.1.CellConfig.UMTS.RAN.NeighborList.IntraFreqCell.${neighbourIndex}`
+    const pre = `Device.Services.FAPService.1.CellConfig.UMTS.RAN.NeighborList.InterFreqCell.${neighbourIndex}`
     let result = {}
 
     const getField = key => neighbourCellConfiguration.hasOwnProperty(key) ? neighbourCellConfiguration[key] : commonConfiguration[key]
@@ -24,10 +24,11 @@ function makeSingleNeighbourConfiguration(commonConfiguration, neighbourCellConf
     const [lac, rac] = getField('Device.Services.FAPService.1.CellConfig.UMTS.CN.LACRAC').split(/:|\|/)
 
     result[`${pre}.CID`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.RAN.CellID')
+    result[`${pre}.UARFCNDL`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.UARFCNDL').split('|')[0] + '|xsd:unsignedInt'
     result[`${pre}.LAC`] = `${lac}|xsd:unsignedInt`
     result[`${pre}.RAC`] = `${rac}|xsd:unsignedInt`
     result[`${pre}.RNCID`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.RAN.RNCID')
-    result[`${pre}.PCPICHScramblingCode`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.PrimaryScramblingCode').split('|')[0]+ '|xsd:unsignedInt'
+    result[`${pre}.PCPICHScramblingCode`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.RAN.RF.PrimaryScramblingCode').split('|')[0] + '|xsd:unsignedInt'
     result[`${pre}.PLMNID`] = getField('Device.Services.FAPService.1.CellConfig.UMTS.CN.PLMNID')
     result[`${pre}.X_000295_TxDiversityIndicator`] = '1|xsd:unsignedInt'
 
