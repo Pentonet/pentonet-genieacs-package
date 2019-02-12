@@ -11,7 +11,7 @@ ensureCorrectParamValues();
 
 function ensureCorrectNumberOfNeighborCells() {
   declare(
-    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.NeighborList.IntraFreqCell.*",
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.NeighborList.InterFreqCell.*",
     {path: now}, {path: neighboursCount});
 }
 
