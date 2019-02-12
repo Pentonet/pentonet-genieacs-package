@@ -45,7 +45,10 @@ function getNeigboursConfiguration(config, serialNumber) {
             return makeSingleNeighbourConfiguration(config['Common'], neighbourCellConfiguration, index)
         })
 
-    return Object.assign({}, ...neighbours)
+    return {
+      neighboursConfiguration: Object.assign({}, ...neighbours),
+      neighboursCount: neighbours.length
+    }
 }
 
 function getConfiguration(args, callback) {
@@ -57,7 +60,7 @@ function getConfiguration(args, callback) {
 
     const specificConfiguration = config[serialNumber] || {}
 
-    const neighboursConfiguration = getNeigboursConfiguration(config, serialNumber)
+    const { neighboursConfiguration, neighboursCount } = getNeigboursConfiguration(config, serialNumber)
 
     const mergedConfiguration = Object.assign(commonConfiguration, specificConfiguration, neighboursConfiguration)
 
@@ -67,7 +70,7 @@ function getConfiguration(args, callback) {
       return [propertyName, parse(value, type), type]
     })
 
-    return callback(null, result)
+    return callback(null, { params: result, neighboursCount })
   } catch (e) {
     return callback(e, null)
   }

@@ -3,10 +3,17 @@
 const now = Date.now();
 
 const serialNumber = declare('DeviceID.SerialNumber', {value: 1}).value[0];
-const params = ext("ext-config", "getConfiguration", serialNumber);
+const { params, neighboursCount } = ext("ext-config", "getConfiguration", serialNumber);
 
+ensureCorrectNumberOfNeighborCells();
 refreshParams();
 ensureCorrectParamValues();
+
+function ensureCorrectNumberOfNeighborCells() {
+  declare(
+    "Device.Services.FAPService.1.CellConfig.UMTS.RAN.NeighborList.IntraFreqCell.*",
+    {path: now}, {path: neighboursCount});
+}
 
 function refreshParams() {
   params.forEach(function(param) {
