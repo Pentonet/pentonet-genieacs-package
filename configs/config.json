@@ -9,5 +9,6 @@
   "FS_PORT" : 7567,
   "FS_HOSTNAME" : "acs.example.com",
   "DEBUG" : false,
-  "XML_RECOVER": true
+  "XML_RECOVER": true,
+  "XML_NO_EMPTY": true
 }
