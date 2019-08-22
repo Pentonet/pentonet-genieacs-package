@@ -17,6 +17,12 @@ function ensureCorrectNumberOfNeighborCells() {
 
 function refreshParams() {
   params.forEach(function(param) {
+    if (param[0] === "Device.FAP.X_000295_DiagMgmt.DiagTuning.1.TuningName") {
+      declare(
+        "Device.FAP.X_000295_DiagMgmt.DiagTuning.*",
+        {path: now}, {path: 1});
+    }
+
     declare(param[0], {value: now});
   });
 }
